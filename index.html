@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Bubble Wrap - Endless Popping Fun</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px 30px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-item {
+            text-align: center;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .bubble-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .bubble {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.1s ease;
+            box-shadow: 
+                3px 3px 6px rgba(0,0,0,0.1),
+                inset -2px -2px 4px rgba(0,0,0,0.1),
+                inset 2px 2px 4px rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            width: 15px;
+            height: 20px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            filter: blur(3px);
+            z-index: 2;
+        }
+
+        .bubble:hover {
+            transform: scale(1.05);
+            box-shadow: 
+                4px 4px 8px rgba(0,0,0,0.15),
+                inset -2px -2px 4px rgba(0,0,0,0.1),
+                inset 2px 2px 4px rgba(255,255,255,0.9);
+        }
+
+        .bubble:active {
+            transform: scale(0.95);
+        }
+
+        .bubble.popped {
+            animation: popAnimation 0.4s ease-out forwards;
+            pointer-events: none;
+        }
+
+        .bubble.popped::before {
+            display: none;
+        }
+
+        .bubble.regenerating {
+            animation: regenerateAnimation 0.5s ease-out forwards;
+        }
+
+        @keyframes popAnimation {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            30% {
+                transform: scale(1.3);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(0);
+                opacity: 0;
+            }
+        }
+
+        @keyframes regenerateAnimation {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes particleBurst {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .sound-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #4CAF50;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(25px);
+        }
+
+        .color-mode {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .bubble-container {
+                grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+                gap: 6px;
+            }
+            
+            .bubble {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .stats {
+                gap: 20px;
+                padding: 10px 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🫧 Digital Bubble Wrap</h1>
+        <p>Click the bubbles to pop them! Watch the colorful burst effects.</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <span class="stat-number" id="popCount">0</span>
+            <span class="stat-label">Bubbles Popped</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="currentBubbles">0</span>
+            <span class="stat-label">Active Bubbles</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number" id="totalGenerated">0</span>
+            <span class="stat-label">Total Generated</span>
+        </div>
+    </div>
+
+    <div class="bubble-container" id="bubbleContainer">
+        <!-- Bubbles will be generated here -->
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="resetBubbles()">🔄 Reset All</button>
+        <button class="btn" onclick="addMoreBubbles()">➕ Add More Bubbles</button>
+        <div class="sound-toggle">
+            <span>🔊 Sound:</span>
+            <div class="toggle-switch active" id="soundToggle" onclick="toggleSound()">
+                <div class="toggle-slider"></div>
+            </div>
+        </div>
+        <div class="color-mode">
+            <span>🎨 Color Burst:</span>
+            <div class="toggle-switch active" id="colorToggle" onclick="toggleColorMode()">
+                <div class="toggle-slider"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class BubbleWrap {
+            constructor() {
+                this.container = document.getElementById('bubbleContainer');
+                this.popCount = 0;
+                this.totalGenerated = 0;
+                this.soundEnabled = true;
+                this.colorMode = true;
+                this.audioContext = null;
+                this.bubbles = [];
+                this.colors = [
+                    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                    '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD',
+                    '#00D2D3', '#FF9F43', '#10AC84', '#EE5A24'
+                ];
+                
+                this.initAudio();
+                this.generateInitialBubbles();
+                this.updateStats();
+            }
+
+            initAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+
+            createPopSound() {
+                if (!this.audioContext || !this.soundEnabled) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, this.audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 0.1);
+            }
+
+            createBubble() {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.dataset.id = Date.now() + Math.random();
+                
+                bubble.addEventListener('click', (e) => this.popBubble(e, bubble));
+                
+                this.container.appendChild(bubble);
+                this.bubbles.push(bubble);
+                this.totalGenerated++;
+                
+                // Add a small delay before the bubble is fully interactive
+                setTimeout(() => {
+                    bubble.classList.add('regenerating');
+                }, 10);
+                
+                return bubble;
+            }
+
+            createBurstParticles(bubble, color) {
+                const rect = bubble.getBoundingClientRect();
+                const containerRect = this.container.getBoundingClientRect();
+                const centerX = rect.left - containerRect.left + rect.width / 2;
+                const centerY = rect.top - containerRect.top + rect.height / 2;
+                
+                const particleCount = 6 + Math.floor(Math.random() * 4); // 6-9 particles
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    
+                    const size = 4 + Math.random() * 8; // 4-12px
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.background = color;
+                    particle.style.left = `${centerX}px`;
+                    particle.style.top = `${centerY}px`;
+                    particle.style.boxShadow = `0 0 ${size}px ${color}`;
+                    
+                    // Random direction and distance
+                    const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+                    const distance = 30 + Math.random() * 40; // 30-70px
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+                    
+                    particle.style.setProperty('--tx', `${tx}px`);
+                    particle.style.setProperty('--ty', `${ty}px`);
+                    
+                    const duration = 300 + Math.random() * 300; // 300-600ms
+                    particle.style.animation = `particleBurst ${duration}ms ease-out forwards`;
+                    
+                    this.container.appendChild(particle);
+                    
+                    // Remove particle after animation
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    }, duration);
+                }
+            }
+
+            popBubble(event, bubble) {
+                if (bubble.classList.contains('popped')) return;
+                
+                event.preventDefault();
+                
+                // Create pop sound
+                this.createPopSound();
+                
+                // Change bubble color if color mode is enabled
+                if (this.colorMode) {
+                    const randomColor = this.colors[Math.floor(Math.random() * this.colors.length)];
+                    bubble.style.background = `radial-gradient(circle, ${randomColor}, ${randomColor}88)`;
+                    bubble.style.boxShadow = `0 0 20px ${randomColor}`;
+                    
+                    // Create burst particles
+                    this.createBurstParticles(bubble, randomColor);
+                } else {
+                    bubble.style.background = '#ffffff';
+                    bubble.style.boxShadow = 'none';
+                }
+                
+                // Add pop animation
+                bubble.classList.add('popped');
+                
+                // Update stats
+                this.popCount++;
+                this.updateStats();
+                
+                // Remove from active bubbles array
+                const index = this.bubbles.indexOf(bubble);
+                if (index > -1) {
+                    this.bubbles.splice(index, 1);
+                }
+                
+                // Regenerate bubble after animation
+                setTimeout(() => {
+                    if (bubble.parentNode) {
+                        bubble.parentNode.removeChild(bubble);
+                    }
+                    this.regenerateBubble();
+                }, 400);
+            }
+
+            regenerateBubble() {
+                // Create a new bubble to replace the popped one
+                setTimeout(() => {
+                    this.createBubble();
+                    this.updateStats();
+                }, Math.random() * 1000 + 500); // Random delay between 0.5-1.5 seconds
+            }
+
+            generateInitialBubbles() {
+                const containerWidth = this.container.offsetWidth;
+                const bubbleWidth = 68; // 60px + 8px gap
+                const bubblesPerRow = Math.floor(containerWidth / bubbleWidth);
+                const rows = Math.floor((window.innerHeight * 0.6) / 68); // Use 60% of viewport height
+                
+                const totalBubbles = Math.max(bubblesPerRow * rows, 12); // At least 12 bubbles
+                
+                for (let i = 0; i < totalBubbles; i++) {
+                    this.createBubble();
+                }
+                
+                this.updateStats();
+            }
+
+            addMoreBubbles() {
+                for (let i = 0; i < 12; i++) {
+                    setTimeout(() => this.createBubble(), i * 50);
+                }
+                setTimeout(() => this.updateStats(), 600);
+            }
+
+            resetAllBubbles() {
+                // Remove all existing bubbles
+                this.bubbles.forEach(bubble => {
+                    if (bubble.parentNode) {
+                        bubble.parentNode.removeChild(bubble);
+                    }
+                });
+                
+                // Remove any remaining particles
+                const particles = this.container.querySelectorAll('.particle');
+                particles.forEach(particle => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                });
+                
+                this.bubbles = [];
+                this.popCount = 0;
+                this.totalGenerated = 0;
+                
+                // Generate new bubbles
+                this.generateInitialBubbles();
+            }
+
+            updateStats() {
+                document.getElementById('popCount').textContent = this.popCount;
+                document.getElementById('currentBubbles').textContent = this.bubbles.length;
+                document.getElementById('totalGenerated').textContent = this.totalGenerated;
+            }
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const toggle = document.getElementById('soundToggle');
+                toggle.classList.toggle('active', this.soundEnabled);
+                
+                // Resume audio context if needed (required by some browsers)
+                if (this.soundEnabled && this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+            }
+
+            toggleColorMode() {
+                this.colorMode = !this.colorMode;
+                const toggle = document.getElementById('colorToggle');
+                toggle.classList.toggle('active', this.colorMode);
+            }
+        }
+
+        // Initialize the bubble wrap
+        let bubbleWrap;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            bubbleWrap = new BubbleWrap();
+        });
+
+        // Global functions for buttons
+        function resetBubbles() {
+            bubbleWrap.resetAllBubbles();
+        }
+
+        function addMoreBubbles() {
+            bubbleWrap.addMoreBubbles();
+        }
+
+        function toggleSound() {
+            bubbleWrap.toggleSound();
+        }
+
+        function toggleColorMode() {
+            bubbleWrap.toggleColorMode();
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (bubbleWrap) {
+                // Adjust bubble layout on resize
+                setTimeout(() => bubbleWrap.updateStats(), 100);
+            }
+        });
+
+        // Enable audio context on first user interaction (required by some browsers)
+        document.addEventListener('click', function enableAudio() {
+            if (bubbleWrap && bubbleWrap.audioContext && bubbleWrap.audioContext.state === 'suspended') {
+                bubbleWrap.audioContext.resume();
+            }
+            document.removeEventListener('click', enableAudio);
+        }, { once: true });
+    </script>
+</body>
+</html>
